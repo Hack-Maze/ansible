@@ -61,12 +61,15 @@
         chdir: $HOME
         creates: pod_network_setup.log
 
-    # - name: install Pod network
-    #   become: yes
-    #   become_user: hackmaze-user
-    #   shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-beta4/aio/deploy/recommended.yaml >> pod_DASHBOARD_setup.log
-    #   args:
-    #     chdir: $HOME
-    #     creates: pod_network_setup.log
+    - name: clone kubernetes manifests 
+      become_user: hackmaze-user
+      shell: git clone https://github.com/Hack-Maze/k8s
+      args:
+        chdir: $HOME
 
 
+    - name: applying kubernetes manifests 
+      become_user: hackmaze-user
+      shell: kubctl apply -f .
+      args:
+        chdir: $HOME/k8s       
