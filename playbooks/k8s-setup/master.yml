@@ -63,13 +63,12 @@
 
     - name: clone kubernetes manifests 
       become_user: hackmaze-user
-      shell: git clone https://github.com/Hack-Maze/k8s
-      args:
-        chdir: $HOME
-
+      git:
+        repo: 'https://github.com/Hack-Maze/k8s'
+        dest: $HOME
 
     - name: applying kubernetes manifests 
       become_user: hackmaze-user
-      shell: kubctl apply -f .
+      shell: kubectl apply -f .
       args:
         chdir: $HOME/k8s       
