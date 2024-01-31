@@ -1,6 +1,6 @@
 ---
-- import_playbook: ~/ansible/k8s-setup/kube-dependencies.yml
+- import_playbook: kube-dependencies.yml
 
-- import_playbook: ~/ansible/k8s-setup/workers.yml
+- import_playbook: workers.yml
 
-- import_playbook: ~/ansible/k8s-setup/master.yml
+- import_playbook: master.yml
