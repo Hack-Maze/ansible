@@ -1,0 +1,14 @@
+- hosts: master
+  become: yes
+  tasks:
+    - name: clone kubernetes manifests 
+      become_user: hackmaze-user
+      git:
+        repo: 'https://github.com/Hack-Maze/k8s'
+        dest: $HOME/k8s
+
+    - name: applying kubernetes manifests 
+      become_user: hackmaze-user
+      shell: kubectl apply -f .
+      args:
+        chdir: $HOME/k8s  
