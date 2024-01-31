@@ -8,7 +8,7 @@
         dest: $HOME/k8s
         
     - name: Wait for cluster to initiate 
-     pause:
+      pause:
         seconds: 30
         
     - name: applying kubernetes manifests 
