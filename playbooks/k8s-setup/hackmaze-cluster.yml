@@ -6,7 +6,11 @@
       git:
         repo: 'https://github.com/Hack-Maze/k8s'
         dest: $HOME/k8s
-
+        
+    - name: Wait for cluster to initiate 
+     pause:
+        seconds: 30
+        
     - name: applying kubernetes manifests 
       become_user: hackmaze-user
       shell: kubectl apply -f .
