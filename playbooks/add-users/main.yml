@@ -1,0 +1,13 @@
+---
+- name: Loop through hackmaze clusters
+ include_tasks: create-user.yml
+ vars:
+    username: "{{ item.username }}"
+    groupname: "{{ item.groupname }}"
+    namespace: "{{ item.namespace }}"
+    clustername: "{{ item.clustername }}"
+    clusteraddress: "{{ item.clusteraddress }}"
+    verbs: "{{ item.verbs }}"
+    resources: "{{ item.resources }}"
+ loop:
+    - { username: 'youssef', groupname: 'backend-dev', namespace: 'default', clustername: 'kubernetes', clusteraddress: '10.0.0.12', verbs: 'get,watch,list,update,create,patch,delete', resources: 'pods,services,secrets,configmaps' }
