@@ -1,0 +1,66 @@
+---
+- name: create k8s users
+  hosts: master
+  gather_facts: yes
+  tasks:
+    - name: Loop through hackmaze clusters
+      include_tasks: create-user.yml
+      vars:
+        UserName: "{{ item.username }}"
+        GroupName: "{{ item.groupname }}"
+        Namespace: "{{ item.namespace }}"
+        ClusterName: "{{ item.clustername }}"
+        ClusterAddress: "{{ item.clusteraddress }}"
+        Role: "{{ item.role }}"
+      loop:
+
+        - username: "mrym"
+          groupname: "backend-dev"
+          namespace: "default"
+          clustername: "kubernetes"
+          clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
+          role: "developer"
+
+
+        - username: "yusuf"
+          groupname: "backend-dev"
+          namespace: "default"
+          clustername: "kubernetes"
+          clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
+          role: "developer"
+
+
+
+        - username: "moali"
+          groupname: "frontend-dev"
+          namespace: "default"
+          clustername: "kubernetes"
+          clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
+          role: "developer"
+
+        - username: "juba"
+          groupname: "security"
+          namespace: "default"
+          clustername: "kubernetes"
+          clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
+          role: "security"
+
+
+        - username: "norhan"
+          groupname: "security"
+          namespace: "default"
+          clustername: "kubernetes"
+          clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
+          role: "security"
+
+
+
+        - username: "mostafa"
+          groupname: "devops"
+          namespace: "default"
+          clustername: "kubernetes"
+          clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
+          role: "devops"
+
+
+

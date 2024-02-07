@@ -1,0 +1,191 @@
+---
+- name: Create  {{ UserName }} new groups
+  become: yes
+  group:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ GroupName }}"
+    - "{{ UserName }}"
+
+- name: Generate a random password
+  set_fact:
+    generated_password: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
+
+
+- name: Print password of  {{ UserName }}
+  ansible.builtin.debug:
+    msg: "The password is  {{ generated_password }}"
+
+
+
+- name: Ensure {{ UserName }}'s user exists and add to group
+  become: yes
+  user:
+    name: "{{ UserName }}"
+    state: present
+    createhome: yes
+    password: "{{ generated_password | password_hash('sha512') }}"
+    update_password: always
+    groups: "{{ GroupName }},{{ UserName }}"
+    append: yes
+
+
+- name: Expire {{ UserName }}'s password on first login
+  ansible.builtin.command:
+    cmd: passwd -e {{ UserName }}
+  become: yes
+
+
+
+- name: create password directory at {{ UserName }}'s home
+  file:
+    path: /home/hackmaze-user/passwords 
+    state: directory
+  delegate_to: localhost
+
+
+- name: create a passwords file 
+  ansible.builtin.copy:
+    content: "User {{ UserName }} password: {{ generated_password }}\n"
+    dest: /home/hackmaze-user/passwords/passwords{{ UserName }}.txt
+    mode: 0600
+  delegate_to: localhost
+
+
+- name: Create directory for {{ UserName }} certificates
+  ansible.builtin.file:
+    path: "/etc/kubernetes/users/certificates/{{ UserName }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+  
+
+- name: Generate private key for {{ UserName }}
+  become: yes
+  openssl_privatekey:
+    path: /etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.key
+    size: 2048
+
+
+- name: Create CSR (Certificate Signing Request)
+  become: yes
+  openssl_csr:
+    path: "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.csr"
+    privatekey_path: "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.key"
+    organization_name: "{{ GroupName }}"
+    common_name: "{{ UserName }}"
+
+
+
+- name: Signing {{ UserName }}'s' Certificate With K8s CA (Certificate Authorities)
+  become: yes
+  shell: openssl x509 -req -in /etc/kubernetes/users/certificates/{{ UserName }}/{{UserName}}.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out /etc/kubernetes/users/certificates/{{ UserName }}/{{UserName}}.crt -days 365
+
+
+
+- name: Setting up kubeconfig for {{ UserName }}
+  become: yes
+  shell: kubectl --kubeconfig /etc/kubernetes/users/certificates/{{ UserName }}/{{UserName}}.kubeconfig config set-cluster {{ClusterName}} --server https://{{ClusterAddress}}:6443 --certificate-authority=/etc/kubernetes/pki/ca.crt --embed-certs=true
+
+
+
+- name: Make kubeconfig readable to  {{ UserName }}
+  become: yes
+  file:
+    path: "{{ item }}"
+    mode: "0666"
+  with_items: 
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.crt"
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.csr"
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.kubeconfig"
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.key"
+
+
+
+- name: Persist KUBECONFIG in .bashrc file of {{ UserName }}
+  become: yes
+  ansible.builtin.lineinfile:
+    path: "/home/{{ UserName }}/.bashrc"
+    line: 'export KUBECONFIG=/etc/kubernetes/users/certificates/"{{ UserName }}"/"{{ UserName }}".kubeconfig'
+    insertafter: EOF
+
+
+- name: Setting Up k8s Context For {{ UserName }}
+  shell: kubectl --kubeconfig /etc/kubernetes/users/certificates/{{ UserName }}/{{UserName}}.kubeconfig config set-context {{UserName}}-context --cluster {{ClusterName}} --namespace {{Namespace}} --user {{UserName}}
+  become: yes
+
+
+- name: Setting Up k8s Credentials For {{ UserName }}
+  shell: kubectl --kubeconfig /etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.kubeconfig  config set-credentials {{UserName}} --client-certificate=/etc/kubernetes/users/certificates/{{ UserName }}/{{UserName}}.crt --client-key=/etc/kubernetes/users/certificates/{{ UserName }}/{{UserName}}.key --embed-certs=true
+  become: yes
+
+
+
+  
+
+
+- name: Check if {{ UserName }} already exists in the file
+  ansible.builtin.shell:
+    cmd: grep -q "{{ UserName }}" /home/hackmaze-user/k8s/{{ Role }}-rolebindings.yml
+  register: grep_result
+  failed_when: false  # Do not fail even if grep command returns a non-zero exit code
+
+
+- name: Add {{ UserName }} to RoleBinding file
+  become_user: "hackmaze-user"
+  ansible.builtin.lineinfile:
+    path: /home/hackmaze-user/k8s/{{ Role }}-rolebindings.yml
+    insertafter: '^subjects:$'
+    line: "- kind: User\n  name: {{ UserName }}\n  apiGroup: rbac.authorization.k8s.io"
+    state: present
+  when: grep_result.rc !=  0
+
+
+
+- name: apply roles for {{ UserName }}
+  shell: kubectl apply -f /home/hackmaze-user/k8s/{{ Role }}-role.yml
+  become: yes
+  become_user: hackmaze-user
+
+
+- name: Create rolebindings for {{ UserName }}
+  shell: kubectl apply -f /home/hackmaze-user/k8s/{{ Role }}-rolebindings.yml
+  become: yes
+  become_user: hackmaze-user
+
+
+
+- name: Update the current-context in the kubeconfig file of {{ UserName }}
+  become: yes
+  lineinfile:
+    path: /etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.kubeconfig
+    regexp: '^current-context: ""'
+    line: 'current-context: "{{ UserName }}-context"'
+
+
+    
+
+- name: Make {{ UserName }} certs  belong to root and readable to others
+  become: yes
+  
+  file:
+    path: "{{ item }}"
+    mode: "0640"
+    owner: "root"
+  with_items:
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.crt"
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.csr"
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.key"
+
+
+- name: Make {{ UserName }} kubeconfig  belong to {{ UserName }}
+  become: yes
+  
+  file:
+    path: "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.kubeconfig"
+    mode: "0640"
+    owner: "root"
+    group: "{{ UserName }}"

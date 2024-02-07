@@ -1,4 +1,4 @@
 ---
 - import_playbook: k8s-setup/main.yml
 
-- import_playbook: add-users/main.yml
+- import_playbook: users/main.yml

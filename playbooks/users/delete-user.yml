@@ -1,0 +1,55 @@
+---
+- hosts: master
+  become: yes
+  tasks:
+
+
+
+    - name: Check if there are processes owned by  {{ UserName }}
+      ansible.builtin.shell:
+        cmd: "pgrep -u mariem"
+      register: procs_check
+      ignore_errors: true
+    
+    - name: Kill processes owned by {{ UserName }} if they exist
+      ansible.builtin.shell:
+        cmd: "pkill -9 -u {{ UserName }}"
+      when: procs_check.rc == 0
+
+
+
+
+
+
+
+    - name: ensure  {{ UserName }} 's user does not exist
+      user:
+        name: "{{UserName}}"
+        state: absent
+    
+
+    - name: Remove {{ UserName }}'s home directory
+      file:
+        path: /home/{{ UserName }}
+        state: absent
+ 
+
+
+    - name: Remove {{ UserName }}'s cert directory
+      become: yes
+      file:
+        path: /etc/kubernetes/users/certificates/{{UserName}}
+        state: absent
+
+
+
+    - name: Remove {{ UserName }} block from a {{ Role }}-rolebindings file
+      ansible.builtin.replace:
+        path: /home/hackmaze-user/k8s/{{ Role }}-rolebindings.yml
+        regexp: '^\s*- kind: User\n\s*name: {{ UserName }}\n\s*apiGroup: rbac.authorization.k8s.io$'
+        replace: ''
+
+    - name: apply rolebindings after deleting {{ UserName }}
+      shell: kubectl apply -f /home/hackmaze-user/k8s/{{ Role }}-rolebindings.yml
+      become: yes
+      become_user: hackmaze-user
