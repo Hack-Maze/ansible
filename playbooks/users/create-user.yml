@@ -1,0 +1,401 @@
+---
+# local jump server 
+
+- name: Create  {{ UserName }} new groups
+  become: yes
+  group:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ GroupName }}"
+    - "{{ UserName }}"
+  delegate_to: localhost
+
+
+- name: Ensure {{ UserName }}'s user exists and add to group
+  become: yes
+  user:
+    name: "{{ UserName }}"
+    state: present
+    createhome: yes
+    groups: "{{ GroupName }},{{ UserName }}"
+    append: yes
+  delegate_to: localhost
+
+
+
+- name: chown of home dir to user {{ UserName }}
+  file:
+    path: "/home/{{ UserName }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+  delegate_to: localhost
+
+
+- name: create .ssh dir to user {{ UserName }}
+  file:
+    path: "/home/{{ UserName }}/.ssh"
+    state: directory
+    mode: "0700"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+  delegate_to: localhost
+
+
+- name: Generate an OpenSSH keypair of {{ UserName }}
+  community.crypto.openssh_keypair:
+    path: /home/{{ UserName }}/.ssh/id_rsa
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+  delegate_to: localhost
+
+
+- name: creating autherized users in .ssh of {{ UserName }}
+  file:
+    src: "/home/{{ UserName }}/.ssh/id_rsa.pub"
+    dest: "/home/{{ UserName }}/.ssh/authorized_keys"
+    state: link
+  become: yes
+  delegate_to: localhost
+
+- name: Persist control alias in .bashrc file of {{ UserName }}  
+  become: yes                          
+  ansible.builtin.lineinfile:
+    path: "/home/{{ UserName }}/.bashrc"
+    line: "alias control='ssh -i /home/{{ UserName }}/.ssh/control {{ UserName }}@control'>> /home/{{ UserName }}/.bashrc"    
+    insertafter: EOF
+  delegate_to: localhost
+
+
+
+
+# control
+
+
+
+
+
+
+- name: Create  {{ UserName }} new groups
+  become: yes
+  group:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ GroupName }}"
+    - "{{ UserName }}"
+
+
+
+
+- name: Ensure {{ UserName }}'s user exists and add to group
+  become: yes
+  user:
+    name: "{{ UserName }}"
+    state: present
+    createhome: yes
+    groups: "{{ GroupName }},{{ UserName }}"
+    append: yes
+
+
+
+- name: chown of home dir to user {{ UserName }}
+  file:
+    path: "/home/{{ UserName }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+
+
+- name: create .ssh dir to user {{ UserName }}
+  file:
+    path: "/home/{{ UserName }}/.ssh"
+    state: directory
+    mode: "0700"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+
+
+
+- name: Generate an OpenSSH keypair of {{ UserName }}
+  community.crypto.openssh_keypair:
+    path: /home/{{ UserName }}/.ssh/control
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+
+
+
+
+- name: Set permissions on the private key file
+  file:
+    path: /home/{{ UserName }}/.ssh/control
+    mode: '0600'
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+    state: touch
+  become: yes
+  delegate_to: localhost
+
+
+
+- name: Read the content of the private key
+  become: yes
+  slurp:
+    src: /home/{{ UserName }}/.ssh/control
+  register: file_content
+
+- name: Write the content to a local file
+  become: yes
+  copy:
+    content: "{{ file_content['content'] | b64decode }}"
+    dest: /home/{{ UserName }}/.ssh/control
+  delegate_to: localhost
+
+
+
+
+
+- name: chown of .ssh dir to user {{ UserName }}
+  file:
+    path: "/home/{{ UserName }}/.ssh"
+    state: directory
+    mode: "0700"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+
+
+
+- name: creating autherized users in .ssh of {{ UserName }}
+  file:
+    src: "/home/{{ UserName }}/.ssh/control.pub"
+    dest: "/home/{{ UserName }}/.ssh/authorized_keys"
+    state: link
+  become: yes
+
+
+
+
+- name: Ensure {{ UserName }}'s user exists and add to group
+  become: yes
+  user:
+    name: "{{ UserName }}"
+    state: present
+    createhome: yes
+    groups: "{{ GroupName }},{{ UserName }}"
+    append: yes
+
+
+
+- name: Copy .bashrc file to user's home directory
+  become: yes 
+  copy:
+    src: "/home/{{ UserName }}/.bashrc"
+    dest: "/home/{{ UserName }}/.bashrc"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+    mode: '0644'
+
+- name: Copy .bashrc file to user's home directory
+  become: yes 
+  copy:
+    src: "/home/{{ UserName }}/.profile"
+    dest: "/home/{{ UserName }}/.profile"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+    mode: '0644'
+
+
+- name: Persist control alias in .bashrc file of {{ UserName }}   
+  become: yes                          
+  ansible.builtin.lineinfile:
+    path: "/home/{{ UserName }}/.bashrc"
+    line: "alias control='ssh -i /home/{{ UserName }}/.ssh/control {{ UserName }}@control'>> /home/{{ UserName }}/.bashrc"    
+    state: absent
+
+
+# k8s
+- name: Create directory for {{ UserName }} certificates
+  ansible.builtin.file:
+    path: "/etc/kubernetes/users/certificates/{{ UserName }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+  
+
+- name: Generate private key for {{ UserName }}
+  become: yes
+  openssl_privatekey:
+    path: /etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.key
+    size: 2048
+
+
+- name: Create CSR (Certificate Signing Request)
+  become: yes
+  openssl_csr:
+    path: "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.csr"
+    privatekey_path: "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.key"
+    organization_name: "{{ GroupName }}"
+    common_name: "{{ UserName }}"
+
+
+
+- name: Signing {{ UserName }}'s' Certificate With K8s CA (Certificate Authorities)
+  become: yes
+  shell: openssl x509 -req -in /etc/kubernetes/users/certificates/{{ UserName }}/{{UserName}}.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out /etc/kubernetes/users/certificates/{{ UserName }}/{{UserName}}.crt -days 365
+
+
+
+- name: Setting up kubeconfig for {{ UserName }}
+  become: yes
+  shell: kubectl --kubeconfig /etc/kubernetes/users/certificates/{{ UserName }}/{{UserName}}.kubeconfig config set-cluster {{ClusterName}} --server https://{{ClusterAddress}}:6443 --certificate-authority=/etc/kubernetes/pki/ca.crt --embed-certs=true
+
+
+
+- name: Make kubeconfig readable to  {{ UserName }}
+  become: yes
+  file:
+    path: "{{ item }}"
+    mode: "0666"
+  with_items: 
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.crt"
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.csr"
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.kubeconfig"
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.key"
+
+
+
+- name: Persist KUBECONFIG in .bashrc file of {{ UserName }}
+  become: yes
+  ansible.builtin.lineinfile:
+    path: "/home/{{ UserName }}/.bashrc"
+    line: 'export KUBECONFIG=/etc/kubernetes/users/certificates/"{{ UserName }}"/"{{ UserName }}".kubeconfig'
+    insertafter: EOF
+
+
+- name: Setting Up k8s Context For {{ UserName }}
+  shell: kubectl --kubeconfig /etc/kubernetes/users/certificates/{{ UserName }}/{{UserName}}.kubeconfig config set-context {{UserName}}-context --cluster {{ClusterName}} --namespace {{Namespace}} --user {{UserName}}
+  become: yes
+
+
+- name: Setting Up k8s Credentials For {{ UserName }}
+  shell: kubectl --kubeconfig /etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.kubeconfig  config set-credentials {{UserName}} --client-certificate=/etc/kubernetes/users/certificates/{{ UserName }}/{{UserName}}.crt --client-key=/etc/kubernetes/users/certificates/{{ UserName }}/{{UserName}}.key --embed-certs=true
+  become: yes
+
+
+
+  
+
+
+- name: Check if {{ UserName }} already exists in the file
+  ansible.builtin.shell:
+    cmd: grep -q "{{ UserName }}" /home/hackmaze-user/k8s/{{ Role }}-rolebindings.yml
+  register: grep_result
+  failed_when: false  # Do not fail even if grep command returns a non-zero exit code
+
+
+- name: Add {{ UserName }} to RoleBinding file
+  become_user: "hackmaze-user"
+  ansible.builtin.lineinfile:
+    path: /home/hackmaze-user/k8s/{{ Role }}-rolebindings.yml
+    insertafter: '^subjects:$'
+    line: "- kind: User\n  name: {{ UserName }}\n  apiGroup: rbac.authorization.k8s.io"
+    state: present
+  when: grep_result.rc !=  0
+
+
+
+- name: apply roles for {{ UserName }}
+  shell: kubectl apply -f /home/hackmaze-user/k8s/{{ Role }}-role.yml
+  become: yes
+  become_user: hackmaze-user
+
+
+- name: Create rolebindings for {{ UserName }}
+  shell: kubectl apply -f /home/hackmaze-user/k8s/{{ Role }}-rolebindings.yml
+  become: yes
+  become_user: hackmaze-user
+
+
+
+- name: Update the current-context in the kubeconfig file of {{ UserName }}
+  become: yes
+  lineinfile:
+    path: /etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.kubeconfig
+    regexp: '^current-context: ""'
+    line: 'current-context: "{{ UserName }}-context"'
+
+
+    
+
+- name: Make {{ UserName }} certs  belong to root and readable to others
+  become: yes
+  
+  file:
+    path: "{{ item }}"
+    mode: "0640"
+    owner: "root"
+  with_items:
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.crt"
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.csr"
+    - "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.key"
+
+
+- name: Make {{ UserName }} kubeconfig  belong to {{ UserName }}
+  become: yes
+  
+  file:
+    path: "/etc/kubernetes/users/certificates/{{ UserName }}/{{ UserName }}.kubeconfig"
+    mode: "0640"
+    owner: "root"
+    group: "{{ UserName }}"
+
+
+
+
+- name: Query DNS for public IP
+  shell: " curl ifconfig.me"
+  delegate_to: localhost
+  register: dns_query
+
+
+
+- name: Send a message to the Discord channel with specific username and avatar
+  community.general.discord:
+    webhook_id: "{{ WID }}"
+    webhook_token: "{{ WTOKEN }}"
+    username: Ansible
+    avatar_url: "https://avatars.githubusercontent.com/u/1507452?s=48&v=4"
+    embeds:
+      - title: "ssh identity"
+        description: "```ssh -i /path/to/private/key {{ UserName }}@{{ dns_query.stdout }}```"
+        footer:
+          text: "automation is good"
+
+
+
+- name: Post SSH file using curl
+  shell: |
+    curl -X POST \
+         -H "Content-Type: multipart/form-data" \
+         -F "payload_json={\"content\": \"your ssh key\"};type=application/json" \
+         -F "file=@/home/{{ UserName }}/.ssh/id_rsa;filename=id_rsa" \
+         https://discord.com/api/webhooks/{{ WID }}/{{ WTOKEN }}
+  register: curl_content
+  delegate_to: localhost
+  become: yes
+
+- name: debug the curl output 
+  debug:
+    var: curl_content.stdout

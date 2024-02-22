@@ -17,8 +17,18 @@
     - name: TCP port 6443 on control is reachable from worker
       wait_for: "host={{ hostvars['control']['ansible_default_ipv4']['address'] }} port=6443 timeout=1"
 
+
+
+    - name: create created-log directory
+      become: yes
+      become_user: hackmaze-user
+      file:
+        path: $HOME/created-log
+        state: directory
+        mode: 0755
+
     - name: join cluster
       shell: "{{ hostvars['control'].join_command }} >> node_joined.log"
       args:
         chdir: /home/hackmaze-user
-        creates: node_joined.log
+        creates: created-log/node_joined.log

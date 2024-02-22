@@ -1,0 +1,80 @@
+---
+- name: create k8s users
+  hosts: master
+  gather_facts: yes
+  tasks:
+    - name: Loop through hackmaze clusters
+      include_tasks: create-user.yml
+      vars:
+        UserName: "{{ item.username }}"
+        GroupName: "{{ item.groupname }}"
+        Namespace: "{{ item.namespace }}"
+        ClusterName: "{{ item.clustername }}"
+        ClusterAddress: "{{ item.clusteraddress }}"
+        Role: "{{ item.role }}"
+        WID: "{{ item.wid }}"
+        WTOKEN: "{{ item.wtocken }}"
+      loop:
+
+        - username: "mostafa"
+          groupname: "devops"
+          namespace: "default"
+          clustername: "kubernetes"
+          clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
+          role: "devops"
+          wid: "1205702313214484500"
+          wtoken: "4tY5lcu8ZKqUqQJ9AjpNdyXHEbdAohdXv_pcJ8wTsLJGGOL9zwp9zSmqw8h4Xm_BBKuU"
+          
+
+
+        - username: "mrym"
+          groupname: "backend-dev"
+          namespace: "default"
+          clustername: "kubernetes"
+          clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
+          role: "developer"
+          wid: "1205700389459202069"
+          wtoken: "RDuWOUaN7d6gMkCLJ_evhrGTxBgLrFjLFACEG-x4NiWbW8rPSe9gtrdaofnXHmlKBTO-"
+
+
+
+        - username: "yusuf"
+          groupname: "backend-dev"
+          namespace: "default"
+          clustername: "kubernetes"
+          clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
+          role: "developer"
+          wid: "1205700839205896222"
+          wtoken: "J4IFGfY-UV7kUj8WF1S4QQMiNWc-LS43ue_h1jSz14gUQ8jHlaj2JY5wEMx45zf1mGwl"
+
+
+
+        - username: "moali"
+          groupname: "frontend-dev"
+          namespace: "default"
+          clustername: "kubernetes"
+          clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
+          role: "developer"
+          wid: "1205701002939072564"
+          wtoken: "Xytqnq_Abu8tncpmXIfqL73371z5ax0AF9zCHoup2MrdW3LouNg5C70cjvOtvyIi5lAe"
+
+
+        - username: "juba"
+          groupname: "security"
+          namespace: "default"
+          clustername: "kubernetes"
+          clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
+          role: "security"
+          wid: "1205701319478738984"
+          wtoken: "QHUzR7i-8ySCbOyU4gsNySUAp2svEaIKSL4bWIjD_OlDT0ZFJ-1tWC1Cvnc0lQLXlTVd"
+
+
+        - username: "norhan"
+          groupname: "security"
+          namespace: "default"
+          clustername: "kubernetes"
+          clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
+          role: "security"
+          wid: "1205702025908715520"
+          wtoken: "Gs90L_ZMsF1UiYMEQyeSOo06wwG7Kqi3ELXPi4umZF5hWmErhKdlEY7q-LAkAmsCAmYN"
+
