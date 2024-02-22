@@ -63,6 +63,13 @@
         remote_src: yes
         owner: hackmaze-user
 
+    - name: Set permissions for kube config
+      become: yes
+      file:
+        path: /home/hackmaze-user/.kube/config
+        mode: '0600'
+        owner: hackmaze-user
+
     - name: install Pod network
       become: yes
       become_user: hackmaze-user
