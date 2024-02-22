@@ -4,7 +4,7 @@
     - name: clone kubernetes manifests 
       become_user: hackmaze-user
       git:
-        repo: 'https://github.com/Hack-Maze/k8s'
+        repo: 'https://github.com/Hack-Maze/k8s.git'
         dest: $HOME/k8s
         
     - name: Wait for cluster to initiate 
@@ -16,3 +16,62 @@
       shell: kubectl apply -f .
       args:
         chdir: $HOME/k8s  
+
+    - name: Download Helm binary
+      get_url:
+        url: https://get.helm.sh/helm-v3.8.0-linux-amd64.tar.gz
+        dest: /tmp/helm.tar.gz
+        mode: '0755'
+
+    - name: Extract Helm binary
+      unarchive:
+        src: /tmp/helm.tar.gz
+        dest: /tmp
+        remote_src: yes
+
+    - name: Move Helm binary to /usr/local/bin
+      command: mv /tmp/linux-amd64/helm /usr/local/bin/helm
+      args:
+        creates: /usr/local/bin/helm
+
+    - name: Add Prometheus community Helm repository
+      become_user: hackmaze-user
+      shell: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+      args:
+        executable: /usr/local/bin/helm
+
+    - name: Update Helm repositories
+      become_user: hackmaze-user
+      shell: helm repo update
+      args:
+        executable: /usr/local/bin/helm
+
+
+    - name: Create custom Grafana values file
+      become_user: hackmaze-user
+      copy:
+        content: |
+          grafana:
+            grafanaIni:
+              analytics:
+                check_for_updates: true
+              grafana_net:
+                url: https://grafana.net
+              log:
+                mode: console
+              paths:
+                data: /var/lib/grafana/
+                logs: /var/log/grafana
+                plugins: /var/lib/grafana/plugins
+                provisioning: /etc/grafana/provisioning
+              server:
+                domain: hackmaze.0rg.us
+                root_url: http://hackmaze.0rg.us/monitoring
+        dest: $HOME/k8s/grafana-values.yaml
+
+
+    - name: Install Prometheus and Grafana using Helm with custom values
+      become_user: hackmaze-user
+      shell: helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace -f $HOME/k8s/grafana-values.yaml
+      args:
+        executable: /usr/local/bin/helm

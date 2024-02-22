@@ -1,4 +1,86 @@
 ---
+# local jump server 
+
+- name: Create  {{ UserName }} new groups
+  become: yes
+  group:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ GroupName }}"
+    - "{{ UserName }}"
+  delegate_to: localhost
+
+
+- name: Ensure {{ UserName }}'s user exists and add to group
+  become: yes
+  user:
+    name: "{{ UserName }}"
+    state: present
+    createhome: yes
+    groups: "{{ GroupName }},{{ UserName }}"
+    append: yes
+  delegate_to: localhost
+
+
+
+- name: chown of home dir to user {{ UserName }}
+  file:
+    path: "/home/{{ UserName }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+  delegate_to: localhost
+
+
+- name: create .ssh dir to user {{ UserName }}
+  file:
+    path: "/home/{{ UserName }}/.ssh"
+    state: directory
+    mode: "0700"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+  delegate_to: localhost
+
+
+- name: Generate an OpenSSH keypair of {{ UserName }}
+  community.crypto.openssh_keypair:
+    path: /home/{{ UserName }}/.ssh/id_rsa
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+  delegate_to: localhost
+
+
+- name: creating autherized users in .ssh of {{ UserName }}
+  file:
+    src: "/home/{{ UserName }}/.ssh/id_rsa.pub"
+    dest: "/home/{{ UserName }}/.ssh/authorized_keys"
+    state: link
+  become: yes
+  delegate_to: localhost
+
+- name: Persist control alias in .bashrc file of {{ UserName }}  
+  become: yes                          
+  ansible.builtin.lineinfile:
+    path: "/home/{{ UserName }}/.bashrc"
+    line: "alias control='ssh -i /home/{{ UserName }}/.ssh/control {{ UserName }}@control'>> /home/{{ UserName }}/.bashrc"    
+    insertafter: EOF
+  delegate_to: localhost
+
+
+
+
+# control
+
+
+
+
+
+
 - name: Create  {{ UserName }} new groups
   become: yes
   group:
@@ -8,14 +90,6 @@
     - "{{ GroupName }}"
     - "{{ UserName }}"
 
-- name: Generate a random password
-  set_fact:
-    generated_password: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
-
-
-- name: Print password of  {{ UserName }}
-  ansible.builtin.debug:
-    msg: "The password is  {{ generated_password }}"
 
 
 
@@ -25,34 +99,131 @@
     name: "{{ UserName }}"
     state: present
     createhome: yes
-    password: "{{ generated_password | password_hash('sha512') }}"
-    update_password: always
     groups: "{{ GroupName }},{{ UserName }}"
     append: yes
 
 
-- name: Expire {{ UserName }}'s password on first login
-  ansible.builtin.command:
-    cmd: passwd -e {{ UserName }}
+
+- name: chown of home dir to user {{ UserName }}
+  file:
+    path: "/home/{{ UserName }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+
+
+- name: create .ssh dir to user {{ UserName }}
+  file:
+    path: "/home/{{ UserName }}/.ssh"
+    state: directory
+    mode: "0700"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
   become: yes
 
 
 
-- name: create password directory at {{ UserName }}'s home
+- name: Generate an OpenSSH keypair of {{ UserName }}
+  community.crypto.openssh_keypair:
+    path: /home/{{ UserName }}/.ssh/control
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
+
+
+
+
+- name: Set permissions on the private key file
   file:
-    path: /home/hackmaze-user/passwords 
+    path: /home/{{ UserName }}/.ssh/control
+    mode: '0600'
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+    state: touch
+  become: yes
+  delegate_to: localhost
+
+
+
+- name: Read the content of the private key
+  become: yes
+  slurp:
+    src: /home/{{ UserName }}/.ssh/control
+  register: file_content
+
+- name: Write the content to a local file
+  become: yes
+  copy:
+    content: "{{ file_content['content'] | b64decode }}"
+    dest: /home/{{ UserName }}/.ssh/control
+  delegate_to: localhost
+
+
+
+
+
+- name: chown of .ssh dir to user {{ UserName }}
+  file:
+    path: "/home/{{ UserName }}/.ssh"
     state: directory
-  delegate_to: localhost
+    mode: "0700"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+  become: yes
 
 
-- name: create a passwords file 
-  ansible.builtin.copy:
-    content: "User {{ UserName }} password: {{ generated_password }}\n"
-    dest: /home/hackmaze-user/passwords/passwords{{ UserName }}.txt
-    mode: 0600
-  delegate_to: localhost
+
+- name: creating autherized users in .ssh of {{ UserName }}
+  file:
+    src: "/home/{{ UserName }}/.ssh/control.pub"
+    dest: "/home/{{ UserName }}/.ssh/authorized_keys"
+    state: link
+  become: yes
 
 
+
+
+- name: Ensure {{ UserName }}'s user exists and add to group
+  become: yes
+  user:
+    name: "{{ UserName }}"
+    state: present
+    createhome: yes
+    groups: "{{ GroupName }},{{ UserName }}"
+    append: yes
+
+
+
+- name: Copy .bashrc file to user's home directory
+  become: yes 
+  copy:
+    src: "/home/{{ UserName }}/.bashrc"
+    dest: "/home/{{ UserName }}/.bashrc"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+    mode: '0644'
+
+- name: Copy .bashrc file to user's home directory
+  become: yes 
+  copy:
+    src: "/home/{{ UserName }}/.profile"
+    dest: "/home/{{ UserName }}/.profile"
+    owner: "{{ UserName }}"
+    group: "{{ UserName }}"
+    mode: '0644'
+
+
+- name: Persist control alias in .bashrc file of {{ UserName }}   
+  become: yes                          
+  ansible.builtin.lineinfile:
+    path: "/home/{{ UserName }}/.bashrc"
+    line: "alias control='ssh -i /home/{{ UserName }}/.ssh/control {{ UserName }}@control'>> /home/{{ UserName }}/.bashrc"    
+    state: absent
+
+
+# k8s
 - name: Create directory for {{ UserName }} certificates
   ansible.builtin.file:
     path: "/etc/kubernetes/users/certificates/{{ UserName }}"
@@ -189,3 +360,42 @@
     mode: "0640"
     owner: "root"
     group: "{{ UserName }}"
+
+
+
+
+- name: Query DNS for public IP
+  shell: " curl ifconfig.me"
+  delegate_to: localhost
+  register: dns_query
+
+
+
+- name: Send a message to the Discord channel with specific username and avatar
+  community.general.discord:
+    webhook_id: "{{ WID }}"
+    webhook_token: "{{ WTOKEN }}"
+    username: Ansible
+    avatar_url: "https://avatars.githubusercontent.com/u/1507452?s=48&v=4"
+    embeds:
+      - title: "ssh identity"
+        description: "```ssh -i /path/to/private/key {{ UserName }}@{{ dns_query.stdout }}```"
+        footer:
+          text: "automation is good"
+
+
+
+- name: Post SSH file using curl
+  shell: |
+    curl -X POST \
+         -H "Content-Type: multipart/form-data" \
+         -F "payload_json={\"content\": \"your ssh key\"};type=application/json" \
+         -F "file=@/home/{{ UserName }}/.ssh/id_rsa;filename=id_rsa" \
+         https://discord.com/api/webhooks/{{ WID }}/{{ WTOKEN }}
+  register: curl_content
+  delegate_to: localhost
+  become: yes
+
+- name: debug the curl output 
+  debug:
+    var: curl_content.stdout
