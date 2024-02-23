@@ -13,7 +13,7 @@
         ClusterAddress: "{{ item.clusteraddress }}"
         Role: "{{ item.role }}"
         WID: "{{ item.wid }}"
-        WTOKEN: "{{ item.wtocken }}"
+        WTOKEN: "{{ item.wtoken }}"
       loop:
 
         - username: "mostafa"
