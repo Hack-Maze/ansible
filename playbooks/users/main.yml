@@ -22,9 +22,10 @@
           clustername: "kubernetes"
           clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
           role: "devops"
-          wid: "1205702313214484500"
-          wtoken: "4tY5lcu8ZKqUqQJ9AjpNdyXHEbdAohdXv_pcJ8wTsLJGGOL9zwp9zSmqw8h4Xm_BBKuU"
-          
+          wid: "{{ lookup('env', 'mostafawid') }}"
+          wtoken: "{{ lookup('env', 'mostafawtoken') }}"
+
+
 
 
         - username: "mrym"
@@ -33,8 +34,8 @@
           clustername: "kubernetes"
           clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
           role: "developer"
-          wid: "1205700389459202069"
-          wtoken: "RDuWOUaN7d6gMkCLJ_evhrGTxBgLrFjLFACEG-x4NiWbW8rPSe9gtrdaofnXHmlKBTO-"
+          wid: "{{ lookup('env', 'mrymwid') }}"
+          wtoken: "{{ lookup('env', 'mrymwtoken') }}"
 
 
 
@@ -44,9 +45,8 @@
           clustername: "kubernetes"
           clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
           role: "developer"
-          wid: "1205700839205896222"
-          wtoken: "J4IFGfY-UV7kUj8WF1S4QQMiNWc-LS43ue_h1jSz14gUQ8jHlaj2JY5wEMx45zf1mGwl"
-
+          wid: "{{ lookup('env', 'yusufwid') }}"
+          wtoken: "{{ lookup('env', 'yusufwtoken') }}"
 
 
         - username: "moali"
@@ -65,8 +65,8 @@
           clustername: "kubernetes"
           clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
           role: "security"
-          wid: "1205701319478738984"
-          wtoken: "QHUzR7i-8ySCbOyU4gsNySUAp2svEaIKSL4bWIjD_OlDT0ZFJ-1tWC1Cvnc0lQLXlTVd"
+          wid: "{{ lookup('env', 'jubawid') }}"
+          wtoken: "{{ lookup('env', 'jubawtoken') }}"
 
 
         - username: "norhan"
@@ -75,6 +75,6 @@
           clustername: "kubernetes"
           clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
           role: "security"
-          wid: "1205702025908715520"
-          wtoken: "Gs90L_ZMsF1UiYMEQyeSOo06wwG7Kqi3ELXPi4umZF5hWmErhKdlEY7q-LAkAmsCAmYN"
+          wid: "{{ lookup('env', 'nourwid') }}"
+          wtoken: "{{ lookup('env', 'nourwtoken') }}"
 
