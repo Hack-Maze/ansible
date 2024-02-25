@@ -22,8 +22,8 @@
           clustername: "kubernetes"
           clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
           role: "devops"
-          wid: "{{ lookup('env', 'mostafawid') }}"
-          wtoken: "{{ lookup('env', 'mostafawtoken') }}"
+          wid: "{{ mostafawid }}"
+          wtoken: "{{ mostafawtoken }}"
 
 
 
@@ -34,8 +34,8 @@
           clustername: "kubernetes"
           clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
           role: "developer"
-          wid: "{{ lookup('env', 'mrymwid') }}"
-          wtoken: "{{ lookup('env', 'mrymwtoken') }}"
+          wid: "{{ mrymwid }}"
+          wtoken: "{{ mrymwtoken }}"
 
 
 
@@ -45,8 +45,8 @@
           clustername: "kubernetes"
           clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
           role: "developer"
-          wid: "{{ lookup('env', 'yusufwid') }}"
-          wtoken: "{{ lookup('env', 'yusufwtoken') }}"
+          wid: "{{ yusufwid }}"
+          wtoken: "{{ yusufwtoken }}"
 
 
         - username: "moali"
@@ -55,8 +55,8 @@
           clustername: "kubernetes"
           clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
           role: "developer"
-          wid: "1205701002939072564"
-          wtoken: "Xytqnq_Abu8tncpmXIfqL73371z5ax0AF9zCHoup2MrdW3LouNg5C70cjvOtvyIi5lAe"
+          wid: "{{ moaliwid }}"
+          wtoken: "{{ moaliwtoken }}"
 
 
         - username: "juba"
@@ -65,8 +65,8 @@
           clustername: "kubernetes"
           clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
           role: "security"
-          wid: "{{ lookup('env', 'jubawid') }}"
-          wtoken: "{{ lookup('env', 'jubawtoken') }}"
+          wid: "{{ jubawid }}"
+          wtoken: "{{ jubawtoken }}"
 
 
         - username: "norhan"
@@ -75,6 +75,6 @@
           clustername: "kubernetes"
           clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
           role: "security"
-          wid: "{{ lookup('env', 'nourwid') }}"
-          wtoken: "{{ lookup('env', 'nourwtoken') }}"
+          wid: "{{ nourwid }}"
+          wtoken: "{{ nourwtoken }}"
 

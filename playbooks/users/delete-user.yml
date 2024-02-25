@@ -57,6 +57,15 @@
 
 
 
+    - name: remove user to sudoers file in control
+      become: yes
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: absent
+        regexp: '^%{{ UserName }} ALL=(ALL:ALL) NOPASSWD: ALL'
+        line: '%{{ UserName }} ALL=(ALL:ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+      when: sudo | bool
 
 # remove it from local
 
@@ -79,4 +88,15 @@
       file:
         path: "/home/{{ UserName }}"
         state: absent
+      delegate_to: localhost
+
+    - name: remove user to sudoers file in jump server
+      become: yes
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: absent
+        regexp: '^%{{ UserName }} ALL=(ALL:ALL) NOPASSWD: ALL'
+        line: '%{{ UserName }} ALL=(ALL:ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+      when: sudo | bool
       delegate_to: localhost

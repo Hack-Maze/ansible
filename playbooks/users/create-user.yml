@@ -22,6 +22,16 @@
     append: yes
   delegate_to: localhost
 
+- name: Add user to sudoers file
+  become: yes
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%{{ UserName }} ALL=(ALL:ALL) NOPASSWD: ALL'
+    line: '%{{ UserName }} ALL=(ALL:ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+  when: sudo | bool
+  delegate_to: localhost
 
 
 - name: chown of home dir to user {{ UserName }}
@@ -122,6 +132,16 @@
     owner: "{{ UserName }}"
     group: "{{ UserName }}"
   become: yes
+
+- name: Add user to sudoers file
+  become: yes
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%{{ UserName }} ALL=(ALL:ALL) NOPASSWD: ALL'
+    line: '%{{ UserName }} ALL=(ALL:ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+  when: sudo | bool
 
 
 
