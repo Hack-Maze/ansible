@@ -30,7 +30,7 @@
     regexp: '^%{{ UserName }} ALL=(ALL:ALL) NOPASSWD: ALL'
     line: '%{{ UserName }} ALL=(ALL:ALL) NOPASSWD: ALL'
     validate: 'visudo -cf %s'
-  when: sudo | bool
+  when: sudo | default(false) | bool
   delegate_to: localhost
 
 
@@ -141,7 +141,7 @@
     regexp: '^%{{ UserName }} ALL=(ALL:ALL) NOPASSWD: ALL'
     line: '%{{ UserName }} ALL=(ALL:ALL) NOPASSWD: ALL'
     validate: 'visudo -cf %s'
-  when: sudo | bool
+  when: sudo | default(false) | bool
 
 
 

@@ -22,6 +22,7 @@
           clustername: "kubernetes"
           clusteraddress: "{{ hostvars['control']['ansible_default_ipv4']['address'] }}"
           role: "devops"
+          sudo: true
           wid: "{{ mostafawid }}"
           wtoken: "{{ mostafawtoken }}"
 
