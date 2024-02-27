@@ -79,3 +79,6 @@
           wid: "{{ nourwid }}"
           wtoken: "{{ nourwtoken }}"
 
+      loop_control:
+        loop_var: item
+      no_log: true
