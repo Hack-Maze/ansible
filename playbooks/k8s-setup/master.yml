@@ -82,4 +82,4 @@
     - name: untaint the control node
       become: yes
       become_user: hackmaze-user
-      shell: kubectl taint nodes hackmaze-control-vm-01 node-role.kubernetes.io/master=:NoSchedule-
+      shell: kubectl taint nodes hackmaze-control-vm-01 node-role.kubernetes.io/control-plane=:NoSchedule-
