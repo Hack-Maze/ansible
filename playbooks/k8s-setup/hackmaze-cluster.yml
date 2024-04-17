@@ -18,8 +18,8 @@
     - name: Add Prometheus manifests
       become_user: hackmaze-user
       shell: |
-        kubectl create -f promanifests/setup
+        kubectl apply -f promanifests/setup
         until kubectl get servicemonitors --all-namespaces ; do date; sleep 1; echo ""; done
-        kubectl create -f promanifests/
+        kubectl apply -f promanifests/
       args:
         chdir: $HOME/k8s
