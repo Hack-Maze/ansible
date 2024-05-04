@@ -24,3 +24,10 @@
       ignore_errors: true
       args:
         chdir: $HOME/k8s
+
+
+    - name: applying kubernetes cert manifests 
+      become_user: hackmaze-user
+      shell: kubectl apply -f cert/
+      args:
+        chdir: $HOME/k8s  
