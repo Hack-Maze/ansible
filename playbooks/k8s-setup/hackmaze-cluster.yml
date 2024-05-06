@@ -26,8 +26,20 @@
         chdir: $HOME/k8s
 
 
-    - name: applying kubernetes cert manifests 
+    - name: applying kubernetes cert-manager.yaml
       become_user: hackmaze-user
-      shell: kubectl apply -f cert/
+      shell: kubectl apply -f cert/cert-manager.yaml
+      args:
+        chdir: $HOME/k8s  
+
+    - name: applying kubernetes cert-issuer.yml
+      become_user: hackmaze-user
+      shell: kubectl apply -f cert/cert-issuer.yml
+      args:
+        chdir: $HOME/k8s  
+
+    - name: applying kubernetes certificate.yml
+      become_user: hackmaze-user
+      shell: kubectl apply -f cert/certificate.yml
       args:
         chdir: $HOME/k8s  
