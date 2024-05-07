@@ -87,7 +87,7 @@
     path: "/home/{{ UserName }}/.bashrc"
     line: "alias control='ssh -i /home/{{ UserName }}/.ssh/control {{ UserName }}@control'>> /home/{{ UserName }}/.bashrc"    
     insertafter: EOF
-    when: grep_result_control.rc !=  0
+  when: grep_result_control.rc !=  0
   delegate_to: localhost
 
 
@@ -399,13 +399,18 @@
 
 
 - name: Add k9s alias to {{ UserName }} .bashrc file
-  become_user: "hackmaze-user"
+  become: yes
   ansible.builtin.lineinfile:
     path: /home/{{ UserName }}/.bashrc
     insertafter: EOF
     line: "alias k9s=/snap/k9s/current/bin/k9s"
     state: present
   when: grep_result.rc !=  0
+
+
+
+
+
 
 - name: Query DNS for public IP
   shell: " curl ifconfig.me"
@@ -437,4 +442,3 @@
          https://discord.com/api/webhooks/{{ WID }}/{{ WTOKEN }}
   delegate_to: localhost
   become: yes
-
