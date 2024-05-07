@@ -31,14 +31,14 @@
       shell: kubectl apply -f cert/cert-manager.yaml
       args:
         chdir: $HOME/k8s  
-        
-    - name: Pause for 15 seconds
-      pause:
-        seconds: 15
+      
         
     - name: applying kubernetes cert-issuer.yml
       become_user: hackmaze-user
       shell: kubectl apply -f cert/cert-issuer.yml
+      retries: 3
+      delay: 10
+      until: command_result.rc == 0
       args:
         chdir: $HOME/k8s  
 
