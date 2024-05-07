@@ -32,16 +32,13 @@
       args:
         chdir: $HOME/k8s  
       
-    - name: Pause for 90 seconds
+    - name: Pause for 120 seconds
       ansible.builtin.pause:
-        seconds: 90
+        seconds: 120
         
     - name: applying kubernetes cert-issuer.yml
       become_user: hackmaze-user
       shell: kubectl apply -f cert/cert-issuer.yml
-      retries: 3
-      delay: 10
-      until: command_result.rc == 0
       args:
         chdir: $HOME/k8s  
 
