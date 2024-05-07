@@ -73,12 +73,21 @@
   become: yes
   delegate_to: localhost
 
+  
+- name: Check if k9s alias already exists in the {{ UserName }} .bashrc
+  ansible.builtin.shell:
+    cmd: grep -q control /home/{{ UserName }}/.bashrc
+  register: grep_result_control
+  failed_when: false  # Do not fail even if grep command returns a non-zero exit code  
+
+
 - name: Persist control alias in .bashrc file of {{ UserName }}  
   become: yes                          
   ansible.builtin.lineinfile:
     path: "/home/{{ UserName }}/.bashrc"
     line: "alias control='ssh -i /home/{{ UserName }}/.ssh/control {{ UserName }}@control'>> /home/{{ UserName }}/.bashrc"    
     insertafter: EOF
+    when: grep_result_control.rc !=  0
   delegate_to: localhost
 
 
@@ -382,7 +391,21 @@
     group: "{{ UserName }}"
 
 
+- name: Check if k9s alias already exists in the {{ UserName }} .bashrc
+  ansible.builtin.shell:
+    cmd: grep -q k9s /home/{{ UserName }}/.bashrc
+  register: grep_result
+  failed_when: false  # Do not fail even if grep command returns a non-zero exit code  
 
+
+- name: Add k9s alias to {{ UserName }} .bashrc file
+  become_user: "hackmaze-user"
+  ansible.builtin.lineinfile:
+    path: /home/{{ UserName }}/.bashrc
+    insertafter: EOF
+    line: "alias k9s=/snap/k9s/current/bin/k9s"
+    state: present
+  when: grep_result.rc !=  0
 
 - name: Query DNS for public IP
   shell: " curl ifconfig.me"
