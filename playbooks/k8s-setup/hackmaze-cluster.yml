@@ -21,5 +21,52 @@
         kubectl create -f promanifests/setup
         until kubectl get servicemonitors --all-namespaces ; do date; sleep 1; echo ""; done
         kubectl create -f promanifests/
+      ignore_errors: true
       args:
         chdir: $HOME/k8s
+
+
+    - name: applying kubernetes cert-manager.yaml
+      become_user: hackmaze-user
+      shell: kubectl apply -f cert/cert-manager.yaml
+      args:
+        chdir: $HOME/k8s  
+      
+    - name: Pause for 120 seconds
+      ansible.builtin.pause:
+        seconds: 120
+        
+    - name: applying kubernetes cert-issuer.yml
+      become_user: hackmaze-user
+      shell: kubectl apply -f cert/cert-issuer.yml
+      args:
+        chdir: $HOME/k8s  
+
+    - name: applying kubernetes certificate.yml
+      become_user: hackmaze-user
+      shell: kubectl apply -f cert/certificate.yml
+      args:
+        chdir: $HOME/k8s  
+
+        
+    - name: installing k9s
+      become_user: hackmaze-user
+      shell:  sudo snap install k9s
+
+
+    - name: Check if k9s alias already exists in the .bashrc
+      ansible.builtin.shell:
+        cmd: grep -q k9s /home/hackmaze-user/.bashrc
+      register: grep_result
+      failed_when: false  # Do not fail even if grep command returns a non-zero exit code  
+    
+    
+    - name: Add k9s alias to .bashrc file
+      become_user: "hackmaze-user"
+      ansible.builtin.lineinfile:
+        path: /home/hackmaze-user/.bashrc
+        insertafter: EOF
+        line: "alias k9s=/snap/k9s/current/bin/k9s"
+        state: present
+      when: grep_result.rc !=  0
+

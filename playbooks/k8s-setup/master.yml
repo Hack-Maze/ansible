@@ -7,7 +7,7 @@
         content: ""
         dest: /etc/kubernetes/kubeadm-config.yaml
         force: yes
-
+        
     - name: configuring the container runtime including its cgroup driver
       blockinfile:
         path: /etc/kubernetes/kubeadm-config.yaml
@@ -55,6 +55,7 @@
         state: directory
         mode: 0755
 
+
     - name: copy admin.conf to user's kube config
       become: yes
       copy:
@@ -77,3 +78,9 @@
       args:
         chdir: /home/hackmaze-user/created-log
         creates: pod_network_setup.log
+
+    - name: untaint the control node
+      become: yes
+      become_user: hackmaze-user
+      shell: kubectl taint nodes hackmaze-control-vm-01 node-role.kubernetes.io/control-plane=:NoSchedule-
+      ignore_errors: true
