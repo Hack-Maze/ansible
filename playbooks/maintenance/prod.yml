@@ -1,0 +1,81 @@
+  - hosts: master
+    tasks:
+
+
+  # frontend-comfigmap.yml
+
+      - name: change the frontend-comfigmap.yml to use the org url 
+        become_user: "hackmaze-user"
+        ansible.builtin.lineinfile:
+          path: /home/hackmaze-user/k8s/frontend-configmap.yml
+          regexp: 'hm-1337\.eastus\.cloudapp\.azure\.com/services/'
+          line: "      window.VITE_API_URL='https://hackmaze.0rg.us/services/'"
+
+
+
+      - name: change the frontend-comfigmap.yml to use the org url 
+        become_user: "hackmaze-user"
+        ansible.builtin.lineinfile:
+          path: /home/hackmaze-user/k8s/frontend-configmap.yml
+          line: "window.VITE_API_URL='https://hm-1337.eastus.cloudapp.azure.com/services/'"
+          state: absent
+
+      - name: change the frontend-comfigmap.yml to use the org url 
+        become_user: "hackmaze-user"
+        ansible.builtin.lineinfile:
+          path: /home/hackmaze-user/k8s/frontend-configmap.yml
+          insertafter: EOF
+          line: "      window.VITE_API_URL='https://hackmaze.0rg.us/services/'"
+          state: present
+
+      - name: applying and configmap and restarting the frontend deployment
+        shell: kubectl apply -f frontend-configmap.yml
+        args:
+          chdir: $HOME/k8s  
+
+
+      - name: restarting the frontend deployment
+        shell: kubectl rollout restart deployment frontend-deployment
+
+
+
+
+      # ingress file
+
+      - name: remove hm1337 from tls
+        become_user: "hackmaze-user"
+        ansible.builtin.lineinfile:
+          path: /home/hackmaze-user/k8s/ingress.yml
+          line: "    - hm-1337.eastus.cloudapp.azure.com"
+          state: absent
+
+
+      - name: uncomment org  hosts
+        become_user: "hackmaze-user"
+        ansible.builtin.lineinfile:
+          path: /home/hackmaze-user/k8s/ingress.yml
+          regexp: "    #- host"
+          line: "    - host: hackmaze.0rg.us"
+
+      - name: uncomment org  hosts
+        become_user: "hackmaze-user"
+        ansible.builtin.lineinfile:
+          path: /home/hackmaze-user/k8s/ingress.yml
+          regexp: "    - http:"
+          line: "      http:"
+
+
+
+      - name: applying ingress
+        shell: kubectl apply -f ingress.yml
+        args:
+          chdir: $HOME/k8s  
+
+
+
+  # certificate change
+
+      - name: replacing certificate.yml
+        shell:  kubectl replace -f certificate.yml 
+        args:
+          chdir: $HOME/k8s/cert
