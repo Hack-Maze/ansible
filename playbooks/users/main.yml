@@ -40,7 +40,7 @@
 
 
 
-        - username: "yusuf"
+        - username: "ziad"
           groupname: "backend-dev"
           namespace: "default"
           clustername: "kubernetes"
